@@ -1,0 +1,1173 @@
+{
+  "name": "Hiring Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2080,
+        -880
+      ],
+      "id": "d8f8d04e-c114-4006-a154-460c8ab271cd",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Uder8WX9Tf4H52mVd1c4YKZFSRNk3Y6akv1UUbXFq7g",
+          "mode": "list",
+          "cachedResultName": "Software Engineer (SWE) Application Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Uder8WX9Tf4H52mVd1c4YKZFSRNk3Y6akv1UUbXFq7g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2068774532,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Uder8WX9Tf4H52mVd1c4YKZFSRNk3Y6akv1UUbXFq7g/edit#gid=2068774532"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1872,
+        -768
+      ],
+      "id": "a63e392c-385b-4ba6-bc62-72ead2cef70f",
+      "name": "Read SWE",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XGIy7KvYnF2yYZS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cI5YEywjLnDq8bz8G37KFP_RtSZ5O46haCW58wHNET8",
+          "mode": "list",
+          "cachedResultName": "Business Development Manager (BDM) (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cI5YEywjLnDq8bz8G37KFP_RtSZ5O46haCW58wHNET8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1076764776,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cI5YEywjLnDq8bz8G37KFP_RtSZ5O46haCW58wHNET8/edit#gid=1076764776"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1872,
+        -976
+      ],
+      "id": "b1901f93-9a32-443e-8033-391b5653e4e0",
+      "name": "Read BDM",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XGIy7KvYnF2yYZS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": "=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1120,
+        -864
+      ],
+      "id": "ca1fdc87-a596-4923-8b75-92b470c198d9",
+      "name": "Loop Over Items",
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1456,
+        -864
+      ],
+      "id": "e18f6d72-a7ac-4084-a46f-ec259503a814",
+      "name": "Merge Rows",
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const SUPABASE_URL = \"\";\nconst SUPABASE_KEY = \"\";\n\n// Step 1: Fetch from Supabase (email + role_type)\nconst dbResponse = await this.helpers.httpRequest({\n  method: \"GET\",\n  url: `${SUPABASE_URL}/rest/v1/candidates?select=email,role_type`,\n  headers: {\n    apikey: SUPABASE_KEY,\n    Authorization: `Bearer ${SUPABASE_KEY}`\n  }\n});\n\n// Step 2: Create Set — Supabase has \"email\" and \"role_type\"\nconst dbKeys = new Set(\n  dbResponse.map(row =>\n    `${row.email?.toLowerCase().trim()}|${row.role_type?.toLowerCase().trim()}`\n  )\n);\n\n// Step 3: Get merge node input\nconst formData = $input.all().map(item => item.json);\n\n// Step 4: Filter — input has \"Email_Address\" and \"Role_Type\"\nconst newEntries = formData.filter(entry => {\n  const email = (entry.Email_Address || \"\").toLowerCase().trim();\n  const role  = (entry.Role_Type     || \"\").toLowerCase().trim();\n  const key   = `${email}|${role}`;\n  return key !== \"|\" && !dbKeys.has(key);\n});\n\n// Step 5: Return\nreturn newEntries.map(entry => ({ json: entry }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        -864
+      ],
+      "id": "1157b967-b7b8-4c9b-a02a-3e1d858a2e38",
+      "name": "Get DB Records",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        -800
+      ],
+      "id": "78995c30-0d78-468f-a12a-9d574a3761d0",
+      "name": "Extract from File",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.Resume_Link.split('id=')[1] }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        -800
+      ],
+      "id": "8a32532e-84b9-41a3-97ac-22c06e60a6f9",
+      "name": "Download Resume",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GCvc71PHZJBs2YJA",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "needsFallback": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -416,
+        -800
+      ],
+      "id": "63f9f7df-ae11-4378-b062-cd2f8d0fa280",
+      "name": "Basic LLM Chain",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const roleType = $('Download Resume').item.json.Role_Type || \"\";\nconst cvText = $json.text || \"\";\n\nconst sweJD = {\n  \"role\": \"Software Engineer\",\n  \"experience\": \"2+ years professional development\",\n  \"education\": \"BS Computer Science or related\",\n  \"must_have\": [\n    \"Backend language: Python, Go, Java, or Node.js\",\n    \"REST API design and development\",\n    \"SQL or NoSQL database experience\",\n    \"Git version control\",\n    \"Production-level project experience\"\n  ],\n  \"good_to_have\": [\n    \"Cloud: AWS, GCP, or Azure\",\n    \"Docker or Kubernetes\",\n    \"CI/CD pipelines\",\n    \"System design knowledge\",\n    \"Open source contributions\"\n  ],\n  \"scoring\": {\n    \"80_100\": \"Strong: production systems, measurable impact, cloud/DevOps, 4+ years\",\n    \"50_79\": \"Average: real projects but limited scale, 2-3 years\",\n    \"0_49\": \"Weak: tutorials only, no production exp, vague skills\"\n  }\n};\n\nconst bdmJD = {\n  \"role\": \"Business Development Manager\",\n  \"experience\": \"3+ years B2B sales or BD\",\n  \"education\": \"BBA or MBA preferred\",\n  \"must_have\": [\n    \"Proven revenue generation with PKR/USD figures\",\n    \"Enterprise or SME client acquisition\",\n    \"CRM proficiency: Salesforce, HubSpot, or Zoho\",\n    \"Proposal writing and RFP experience\",\n    \"Pipeline management\"\n  ],\n  \"good_to_have\": [\n    \"GCC or international market exposure\",\n    \"Team leadership experience\",\n    \"Channel partner management\",\n    \"BD certifications\"\n  ],\n  \"scoring\": {\n    \"80_100\": \"Strong: clear revenue numbers, 3+ years, CRM tools, measurable wins\",\n    \"50_79\": \"Average: some sales exp, vague numbers, basic tools, potential shown\",\n    \"0_49\": \"Weak: no real BD exp, no metrics, retail or entry-level only\"\n  }\n};\n\nconst jd = roleType === \"Software Engineer\" ? sweJD : bdmJD;\n\nconst chatInput = `Role: ${roleType}\n\nJob Description:\n${JSON.stringify(jd, null, 2)}\n\nCV Content:\n${cvText}\n\nYou are an expert HR recruiter. Analyze the CV against the job description above and return ONLY a valid JSON object with no markdown, no code blocks, no extra text. Use exactly this structure:\n{\n  \"score\": <integer 0-100>,\n  \"classification\": \"<Strong|Average|Weak>\",\n  \"summary\": \"<2-3 sentence overview of the candidate>\",\n  \"strengths\": [\"<strength 1>\", \"<strength 2>\", \"<strength 3>\"],\n  \"concerns\": [\"<concern 1>\", \"<concern 2>\"],\n  \"interview_recommendation\": \"<Yes|No> - <one sentence reason>\"\n}`;\n\nreturn [{\n  json: {\n    chatInput: chatInput\n  }\n}]; "
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -800
+      ],
+      "id": "1dfcb804-330d-426a-ba9e-56efe184b387",
+      "name": "Build AI Prompt",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -640
+      ],
+      "id": "f951f3c2-8628-4e4f-80f7-ee14acaadafb",
+      "name": "Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RJ0W0nRTBOjRJVvp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -640
+      ],
+      "id": "a862ff88-cbea-4c3a-9cb2-147aa886fc72",
+      "name": "Groq",
+      "credentials": {
+        "groqApi": {
+          "id": "wGKA93E3JVGkGagA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "candidates",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "role_type",
+              "fieldValue": "={{ $('Download Resume').item.json.Role_Type }}"
+            },
+            {
+              "fieldId": "full_name",
+              "fieldValue": "={{ $('Download Resume').item.json.Full_Name }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Download Resume').item.json.Email_Address }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $('Download Resume').item.json.Phone_Number }}"
+            },
+            {
+              "fieldId": "city",
+              "fieldValue": "={{ $('Download Resume').item.json.Current_City }}"
+            },
+            {
+              "fieldId": "linkedin",
+              "fieldValue": "={{ $('Download Resume').item.json.LinkedIn_URL }}"
+            },
+            {
+              "fieldId": "experience",
+              "fieldValue": "={{ $('Download Resume').item.json.Experience }}"
+            },
+            {
+              "fieldId": "education",
+              "fieldValue": "={{ $('Download Resume').item.json.Education }}"
+            },
+            {
+              "fieldId": "skills",
+              "fieldValue": "={{ $('Download Resume').item.json.Skills_or_Industries }}"
+            },
+            {
+              "fieldId": "proficiency_level",
+              "fieldValue": "={{ $('Download Resume').item.json.Proficiency_Level }}"
+            },
+            {
+              "fieldId": "salary_expectation",
+              "fieldValue": "={{ $('Download Resume').item.json.Salary_Expectations }}"
+            },
+            {
+              "fieldId": "description",
+              "fieldValue": "={{ $('Download Resume').item.json.Key_Achievement_Description }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $('Download Resume').item.json.Job_Source }}"
+            },
+            {
+              "fieldId": "resume_url",
+              "fieldValue": "={{ $('Download Resume').item.json.Resume_Link }}"
+            },
+            {
+              "fieldId": "ai_score",
+              "fieldValue": "={{ JSON.parse($json.text).score }}"
+            },
+            {
+              "fieldId": "ai_classification",
+              "fieldValue": "={{ JSON.parse($json.text).classification\n}}"
+            },
+            {
+              "fieldId": "ai_summary",
+              "fieldValue": "={{ JSON.parse($json.text).summary }}"
+            },
+            {
+              "fieldId": "ai_strengths",
+              "fieldValue": "={{ JSON.parse($json.text).strengths }}"
+            },
+            {
+              "fieldId": "ai_concerns",
+              "fieldValue": "={{ JSON.parse($json.text).concerns }}"
+            },
+            {
+              "fieldId": "ai_recommendation",
+              "fieldValue": "={{ JSON.parse($json.text).interview_recommendation }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -800
+      ],
+      "id": "992a9c0c-7ad9-4448-b1be-3c793f5cd4c4",
+      "name": "Add Record in DB",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "exP6Yok12SkCVXSP",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Application Received - {{ $json.role_type }} | Trilles AI ",
+        "emailType": "text",
+        "message": "=Dear {{ $json.full_name}},\n\nThank you for applying for the {{ $json.role_type }} position at Trilles AI. We have successfully received your application.\n\nOur hiring team will carefully review your profile and resume. You can expect to hear back from us within 3–5 business days.\n\nIf you have any questions, feel free to reach out to us at jobs@trilles.com.\n\nWe appreciate your interest in joining Trilles AI and wish you the best of luck!\n\nWarm regards,\nTrilles AI Hiring Team\njobs@trilles.com",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        -672
+      ],
+      "id": "8e68b33b-384f-420a-8cc1-d41659b48849",
+      "name": "Confirmation Mail",
+      "webhookId": "b9ee1307-8df1-42f4-8392-77281462e39b",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "X8JWLQl0kPoLb3CB",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2096,
+        -80
+      ],
+      "id": "dd42b18d-6d9d-48d3-a7c3-66c82fb0c467",
+      "name": "Schedule Trigger1",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "candidates",
+        "limit": 200,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "pending"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        -80
+      ],
+      "id": "d137df6a-a0e8-48d0-a280-3dbdc0290224",
+      "name": "Get Pendings",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "exP6Yok12SkCVXSP",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1680,
+        -80
+      ],
+      "id": "467efb5f-3dd5-456d-bbdf-5a228928fb1d",
+      "name": "Email Loop",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "shaikhusama541@gmail.com",
+          "mode": "id"
+        },
+        "start": "={{ $json.slot_start }}",
+        "end": "={{ $json.slot_end }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $('Is Strong?').item.json.email }}"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1120,
+        -160
+      ],
+      "id": "ef482722-087f-429a-a8e4-b4647169ec1d",
+      "name": "Create an event",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "oW2efowrhJ5OFwZk",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2e77a182-94b9-408d-9a37-2cdfe3edd29e",
+              "leftValue": "={{ $json.ai_classification }}",
+              "rightValue": "Average",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1280,
+        96
+      ],
+      "id": "e02a9ba3-134a-4a70-91a8-08288cbf8300",
+      "name": "Is Average?",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Email Loop').item.json.email }}",
+        "subject": "=Interview Scheduled - {{ $('Email Loop').item.json.role_type }} | Trilles AI",
+        "emailType": "text",
+        "message": "=Dear {{ $('Email Loop').item.json.full_name }},  \nCongratulations! After reviewing your application for the {{ $('Email Loop').item.json.role_type }} position at Trilles AI, we are pleased to inform you that you have been  shortlisted for an interview.  \nInterview Details: \n- Date: {{ $('Check Availibility').item.json.slot_start }}\n- Duration: 30 minutes \n- Format: Video Call (Google Meet) - Meeting \n\nPlease confirm your availability by accepting the calendar invite sent to  your email address.\n\nIf you have any questions or need to reschedule, please contact us at  hr@trilles.com at least 24 hours before the interview.  We look forward to speaking with you! \n\nWarm regards, \nTrilles AI Hiring Team \nhr@trilles.com",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -784,
+        -160
+      ],
+      "id": "5208e473-11b8-4e58-b495-f54e7d369202",
+      "name": "Send Schedule Interview",
+      "webhookId": "2aeecb45-a4cd-4935-802e-74696c06bad5",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "X8JWLQl0kPoLb3CB",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "manager@trilles.com",
+        "subject": "=Manual Review Required - {{ $json.role_type }}",
+        "emailType": "text",
+        "message": "=Hi,  \nA new candidate requires your manual review. AI has classified this  applicant as Average and needs your decision before proceeding.  \n\nCandidate Details: \n- Name: {{ $json.full_name }} \n- Role: {{ $json.role_type }} \n- Email: {{ $json.email }} \n- Phone: {{ $json.phone }} \n- Experience: {{ $json.experience }} \n- Education: {{ $json.education }} \n- Salary Expectation: {{ $json.salary_expectation }} \n- LinkedIn: {{ $json.linkedin }} \n- Resume:  {{ $json.resume_url }}\n\nAI Assessment: \n- Score: {{ $json.ai_score }} / 100 \n- Classification: Average \n- Summary: {{ $json.ai_summary }} \n- Strengths: {{ $json.ai_strengths }} \n- Concerns: {{ $json.ai_concerns }} \n- Recommendation: {{ $json.ai_recommendation }}  \n\nPlease review and take action accordingly.  \nTrilles AI Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -992,
+        80
+      ],
+      "id": "8fd8caea-9e8a-4736-9a70-226b5bf24f04",
+      "name": "Send for manual Review",
+      "webhookId": "2c44a4b8-1358-40ed-889a-bcc109f0d89d",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "X8JWLQl0kPoLb3CB",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Your Application at Trilles AI — {{ $json.role_type }}",
+        "emailType": "text",
+        "message": "=Dear {{ $json.full_name }},  \n\nThank you for taking the time to apply for the {{ $json.role_type }}  position at Trilles AI. We truly appreciate your interest in joining  our team.  \n\nAfter a thorough review of all applications, we regret to inform you  that we will not be moving forward with your application at this time.  This was a highly competitive process and this decision does not  reflect on your potential or abilities.  \n\nWe encourage you to: \n- Continue building your skills and experience \n- Follow our LinkedIn page for future openings \n- Apply again when you feel ready for a new opportunity  \n\nWe wish you all the best in your career journey and hope our paths  cross again in the future.  \n\nWarm regards, \nTrilles AI",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -992,
+        288
+      ],
+      "id": "3aae5437-2d6f-4586-b5ef-7e28f9a96324",
+      "name": "Send Rejection Mail",
+      "webhookId": "f371beb5-e61a-4db5-9b91-fcfc24a76e05",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "X8JWLQl0kPoLb3CB",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "943e1104-2338-452f-9e43-d7c73e4038f7",
+              "leftValue": "={{ $json.ai_classification }}",
+              "rightValue": "Strong",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1472,
+        -64
+      ],
+      "id": "7bc3fbb3-fc39-488d-abbf-b4120ff2182d",
+      "name": "Is Strong?",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "available_slots",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "is_booked",
+              "condition": "eq",
+              "keyValue": "false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -160
+      ],
+      "id": "ce2f14c8-0bae-439c-86dd-55545a9868b9",
+      "name": "Check Availibility",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "exP6Yok12SkCVXSP",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "candidates",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Email Loop').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "processed"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        384
+      ],
+      "id": "8e2a889c-a0fd-4011-bfbc-981aa09d0a9d",
+      "name": "Update Status of Candidate",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "exP6Yok12SkCVXSP",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "available_slots",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Check Availibility').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "is_booked",
+              "fieldValue": "True"
+            },
+            {
+              "fieldId": "booked_by",
+              "fieldValue": "={{ $json.attendees[0].email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -160
+      ],
+      "id": "f76fd39e-ac3e-4ce3-91b7-3cac99571d7e",
+      "name": "Update Availibilty",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "exP6Yok12SkCVXSP",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      Role_Type: \"Business Development\",\n\n      Timestamp: item.json[\"Timestamp\"],\n\n      Full_Name: item.json[\"Full Name\"],\n\n      Email_Address: item.json[\"Email Address\"],\n\n      Phone_Number: item.json[\"Phone Number\"],\n\n      Current_City: item.json[\"Current City \"],\n\n      LinkedIn_URL: item.json[\"LinkedIn Profile URL\"],\n\n      Experience: item.json[\"How many years of professional experience do you have in Business Development or Sales roles?\"],\n\n      Education: item.json[\"What is your highest level of education?\"],\n\n      Skills_or_Industries: item.json[\"Please list the industries you have experience developing business within (Select all that apply).\"],\n\n      Proficiency_Level: item.json[\"What is your proficiency level with CRM software (e.g., Salesforce, HubSpot)?\"],\n\n      Salary_Expectations: item.json[\"What are your salary expectations?\"],\n\n      Key_Achievement_Description: item.json[\"Describe a successful business development strategy you conceptualized and executed. What was the outcome?\"],\n\n      Job_Source: item.json[\"How did you hear about this job opening?\"],\n\n      Resume_Link: item.json[\"Upload Your Resume/CV\"]\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        -976
+      ],
+      "id": "72e20c0e-88ab-4381-a3bb-1951901fc589",
+      "name": "Cleaning",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      Role_Type: \"Software Engineer\",\n\n      Timestamp: item.json[\"Timestamp\"],\n\n      Full_Name: item.json[\"Full Name\"],\n\n      Email_Address: item.json[\"Email Address\"],\n\n      Phone_Number: item.json[\"Phone Number\"],\n\n      Current_City: item.json[\"Current City\"],\n\n      LinkedIn_URL: item.json[\"LinkedIn Profile URL (Optional but Recommended)\"],\n\n      Experience: item.json[\"Years of Professional Software Engineering Experience\"],\n\n      Education: item.json[\"What is your highest level of education completed?\"],\n\n      Skills_or_Industries:\n        item.json[\"Which areas of software development are you proficient in? (Select all that apply)\"],\n\n      Proficiency_Level:\n        item.json[\"On a scale of 1 to 10, how comfortable are you with Agile methodologies (e.g., Scrum, Kanban)?\"],\n\n      Salary_Expectations:\n        item.json[\"What are your salary expectations?\"],\n\n      Key_Achievement_Description:\n        item.json[\"Please briefly describe a challenging technical project you successfully completed and what your role was.\"],\n\n      Job_Source:\n        item.json[\"How did you hear about this job opening?\"],\n\n      Resume_Link:\n        item.json[\"Upload Your Resume/CV (PDF preferred, max 10MB)\"]\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        -784
+      ],
+      "id": "61d54085-70d0-4fb7-acfe-507d11836956",
+      "name": "Cleaning1",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "## 🚀 Workflow 1 — Application Ingestion & AI Screening\n\n**Trigger:** Every 2 hours\n\n**What it does:**\n1. Reads new applications from both SWE and BDM Google Sheets\n2. Normalises column names into a unified schema\n3. Deduplicates against Supabase (skips already-processed candidates)\n4. Downloads each resume from Google Drive (handles both URL formats)\n5. Extracts text from PDF\n6. Builds a role-specific AI prompt and sends to Gemini (Groq as fallback)\n7. Safely parses AI JSON output — never crashes on malformed responses\n8. Stores full candidate record + AI assessment in Supabase with status = pending\n9. Sends a confirmation email (HTML) to the candidate\n\n**Assumptions:**\n- Resume files are PDFs uploaded via Google Form (stored in Google Drive)\n- Supabase table: `candidates` with columns matching field IDs below\n- Supabase table: `available_slots` with `slot_start`, `slot_end`, `is_booked`, `booked_by`",
+        "height": 428,
+        "width": 644,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2816,
+        -976
+      ],
+      "id": "381c48d0-b731-44e7-811a-2d44e912ead1",
+      "name": "Note — Workflow 1 Overview"
+    },
+    {
+      "parameters": {
+        "content": "## 📧 Workflow 2 — Email Dispatch & Scheduling\n\n**Trigger:** Every 12 hours (decoupled from ingestion)\n\n**What it does:**\n1. Fetches all candidates with status = `pending` from Supabase\n2. If none found → exits gracefully with no errors\n3. Loops one-by-one through pending candidates\n4. Routes by AI classification:\n   - **Strong** → checks available interview slots → creates Google Calendar event with candidate as attendee → sends HTML interview invitation email\n   - **Strong (no slots)** → sends holding email, sets status = `slots_full` for retry\n   - **Average** → sends HTML manual review notification to hiring manager\n   - **Weak** → sends HTML soft rejection email to candidate\n5. Updates candidate status to `processed` after email sent",
+        "height": 436,
+        "width": 576,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        32
+      ],
+      "id": "810c36b9-543c-4d25-990f-710d3d59c939",
+      "name": "Note — Workflow 2 Overview"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read SWE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read BDM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read SWE": {
+      "main": [
+        [
+          {
+            "node": "Cleaning1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read BDM": {
+      "main": [
+        [
+          {
+            "node": "Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Rows": {
+      "main": [
+        [
+          {
+            "node": "Get DB Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get DB Records": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Add Record in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Record in DB": {
+      "main": [
+        [
+          {
+            "node": "Confirmation Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmation Mail": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Pendings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pendings": {
+      "main": [
+        [
+          {
+            "node": "Email Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Loop": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is Strong?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Update Availibilty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Average?": {
+      "main": [
+        [
+          {
+            "node": "Send for manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Rejection Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Schedule Interview": {
+      "main": [
+        [
+          {
+            "node": "Update Status of Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send for manual Review": {
+      "main": [
+        [
+          {
+            "node": "Update Status of Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Rejection Mail": {
+      "main": [
+        [
+          {
+            "node": "Update Status of Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Strong?": {
+      "main": [
+        [
+          {
+            "node": "Check Availibility",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Average?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Availibility": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status of Candidate": {
+      "main": [
+        [
+          {
+            "node": "Email Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Availibilty": {
+      "main": [
+        [
+          {
+            "node": "Send Schedule Interview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Merge Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cleaning1": {
+      "main": [
+        [
+          {
+            "node": "Merge Rows",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Karachi",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ef6fd7a0-a624-4f87-bf68-abc78713ff3b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1561279726a59ccb79ac1e35c59664d807c335555d543e7f0777b3e5cab27401"
+  },
+  "id": "hdBJC6H9CDPSGtag",
+  "tags": []
+}

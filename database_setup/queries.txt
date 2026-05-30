@@ -1,0 +1,46 @@
+CREATE TABLE candidates (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+  role_type TEXT NOT NULL,
+
+  full_name TEXT,
+  email TEXT NOT NULL,
+  phone TEXT,
+  city TEXT,
+  linkedin TEXT,
+
+  experience TEXT,
+  education TEXT,
+  skills TEXT,
+
+  proficiency_level TEXT,
+  salary_expectation NUMERIC,
+
+  description TEXT,
+  source TEXT,
+  resume_url TEXT,
+
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+
+
+ALTER TABLE candidates
+ADD COLUMN ai_score int2,
+ADD COLUMN ai_classification text,
+ADD COLUMN ai_summary text,
+ADD COLUMN ai_strengths text,
+ADD COLUMN ai_concerns text,
+ADD COLUMN ai_recommendation text;
+
+
+
+
+CREATE TABLE available_slots (
+  id          bigint generated always as identity primary key,
+  slot_start  timestamp not null,
+  slot_end    timestamp not null,
+  is_booked   boolean default false,
+  booked_by   text  -- candidate email
+);
