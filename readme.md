@@ -1,454 +1,189 @@
-# 🤖 HireFlowAI - AI Hiring Automation System
+<!-- HireFlow AI · README by Usama Shahid (fewgets) -->
+<div align="center">
 
-> Fully automated **AI-powered hiring pipeline built in n8n** that screens candidates, evaluates resumes using LLMs, manages interview scheduling, and handles candidate communication automatically.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,55:0F3D3E,100:36FFC7&height=230&section=header&text=HireFlow%20AI&fontSize=60&fontColor=FFFFFF&fontAlignY=36&desc=End-to-end%20AI%20hiring%20automation%20built%20in%20n8n&descSize=17&descAlignY=58&animation=fadeIn" width="100%" alt="HireFlow AI"/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=700&color=36FFC7&center=true&vCenter=true&width=720&height=60&lines=AI+Resume+Screening;Automatic+Interview+Scheduling;Hiring+Without+the+Busywork" alt="Typing SVG"/>
+
+<p>
+  <img src="https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white" alt="n8n"/>
+  <img src="https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini"/>
+  <img src="https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq"/>
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase"/>
+  <img src="https://img.shields.io/badge/Google%20Workspace-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Workspace"/>
+</p>
+
+</div>
+
+---
+## 📌 Overview
+
+**HireFlow AI** is an end-to-end **recruitment automation system** built in **n8n**. It takes over the
+repetitive parts of hiring (reading applications, screening resumes, sending emails and booking
+interviews) so the hiring team only spends time on the candidates who matter.
+
+Applications come in through **Google Forms**, resumes are screened by **AI (Gemini, with Groq as a
+fallback)**, every decision is stored in **Supabase**, and candidates automatically get the right
+email or an **interview booked on Google Calendar**.
+
+> Currently configured for two roles: 💻 **Software Engineer** and 📈 **Business Development Manager**.
 
 ---
 
-## 🎥 Workflow Preview
+## 🎥 Workflows
 
-### 🔹 Workflow 1 — Candidate Ingestion & AI Screening
+### 🔹 Workflow 1: Candidate Ingestion and AI Screening
+<p align="center"><img src="images/workflow1.png" alt="Workflow 1" width="95%"/></p>
 
-![Workflow 1](images/workflow1.png)
-
-### 🔹 Workflow 2 — Communication & Interview Scheduling
-
-![Workflow 2](images/workflow2.png)
+### 🔹 Workflow 2: Communication and Interview Scheduling
+<p align="center"><img src="images/workflow2.png" alt="Workflow 2" width="95%"/></p>
 
 ---
 
-## 📌 What is HireFlowAI?
+## ✨ Features
 
-HireFlowAI is an **end-to-end recruitment automation workflow** designed to eliminate repetitive hiring tasks and speed up candidate processing.
-
-Instead of manually reviewing resumes, sending emails, and scheduling interviews, this system automates the entire flow using **n8n + AI + Supabase + Google Services**.
-
-The workflow continuously monitors job applications, extracts and analyzes resumes using AI, classifies candidates, stores evaluations in a database, and automatically communicates hiring decisions.
-
----
-
-## 🚀 Project Summary
-
-This project automates hiring for **multiple job roles** including:
-
-* 💻 Software Engineer (SWE)
-* 📈 Business Development Manager (BDM)
-
-Applications are collected through **Google Forms**, processed through **AI-powered resume screening**, stored in **Supabase**, and routed through intelligent hiring logic.
-
-The system:
-
-* Reads applications automatically
-* Prevents duplicate processing
-* Downloads and extracts resumes
-* Uses AI to evaluate candidates
-* Scores and classifies applicants
-* Books interviews automatically
-* Sends professional emails
-* Maintains full hiring records
-
-All without manual intervention.
+| | Feature |
+|:-:|---|
+| 📥 | Collects applications from **Google Forms and Sheets** |
+| 🧹 | Normalises different role forms into **one candidate schema** |
+| 🔁 | **Duplicate detection** so no candidate is processed twice |
+| 📄 | Downloads resumes from **Google Drive** and extracts PDF text |
+| 🤖 | **AI screening** with role-specific prompts: score, strengths, concerns |
+| 🧠 | **Gemini → Groq fallback** keeps screening running if one provider fails |
+| 🛢️ | Full candidate history in **Supabase PostgreSQL** |
+| 📅 | **Automatic interview booking** in free calendar slots |
+| 📧 | Acknowledgement, interview, review and rejection **emails** |
+| 🔄 | Two **decoupled workflows** for reliability and easy debugging |
 
 ---
 
-## ⚙️ Features
+## 🔄 How It Works
 
-* 📥 **Google Forms + Sheets Integration** – collect applications automatically
-* 🧹 **Data Normalization** – unify different role forms into one schema
-* 🔁 **Duplicate Detection** – avoid processing same candidate twice
-* 📄 **Resume Download + PDF Extraction** – fetch resumes from Google Drive
-* 🤖 **AI Resume Screening** – evaluate candidates using LLMs
-* 🧠 **Gemini + Groq Fallback** – resilient AI pipeline
-* 🛢 **Supabase Database** – central candidate storage
-* 📅 **Interview Scheduling** – auto-book interview slots
-* 📧 **Automated Emails** – acknowledgement, interview, review & rejection
-* 🔄 **Decoupled Workflows** – ingestion and communication run independently
-* 🚀 **Fully Automated Hiring Pipeline**
+### 🚀 Workflow 1: Ingestion and Screening *(every 2 hours)*
+
+```mermaid
+flowchart LR
+    F[📝 Google Forms<br/>+ Sheets] --> N[🧹 Clean and map]
+    N --> D{🔁 Duplicate?}
+    D -->|Yes| S[⏭️ Skip]
+    D -->|No| R[📄 Download resume<br/>+ extract PDF]
+    R --> AI[🤖 AI screening<br/>Gemini → Groq]
+    AI --> DB[(🛢️ Supabase)]
+    DB --> E[📧 Confirmation email]
+```
+
+### 📧 Workflow 2: Communication and Scheduling *(every 12 hours)*
+
+```mermaid
+flowchart LR
+    P[⏳ Pending candidates] --> C{🧠 AI classification}
+    C -->|🟢 Strong| I[📅 Book free slot<br/>+ interview email]
+    C -->|🟡 Average| M[👀 Manual review email<br/>to hiring team]
+    C -->|🔴 Weak| X[✉️ Polite rejection]
+    I --> U[(Update status)]
+    M --> U
+    X --> U
+```
+
+---
+
+## 🗄️ Database
+
+| Table | Stores |
+|---|---|
+| `candidates` | Personal info, resume link, AI score, classification, strengths and concerns, hiring status |
+| `available_slots` | Interview times, booking status, assigned candidate |
+
+The SQL is in [`database_setup/queries.txt`](database_setup/queries.txt).
+
+---
+
+## ⚙️ Setup
+
+### ✅ Prerequisites
+A running **n8n** instance · a Google account (Forms, Sheets, Drive, Gmail, Calendar) · a **Supabase** project · **Gemini** and **Groq** API keys.
+
+### 1. Clone
+```bash
+git clone https://github.com/fewgets/Hiring-Automation.git
+cd Hiring-Automation
+```
+
+### 2. Database
+Open the **Supabase SQL Editor** and run `database_setup/queries.txt`. This creates `candidates` and `available_slots`.
+
+### 3. Import the workflow
+In n8n: **Workflows → Import** → `workflow/Hiring Automation.json`.
+
+### 4. Credentials
+Add these in n8n:
+
+| Credential | Used for |
+|---|---|
+| Google Sheets OAuth2 | Reading applications |
+| Google Drive OAuth2 | Downloading resumes |
+| Google Calendar OAuth2 | Creating interview events |
+| Gmail OAuth2 | Candidate emails |
+| Supabase (URL + service role key) | Candidate database and slots |
+| Gemini API | Primary AI screening |
+| Groq API | AI fallback |
+
+### 5. Your Google assets
+Replace the Sheet IDs, Calendar ID, hiring-manager email and form-linked resources in the workflow nodes.
+
+### 6. Test and activate
+Run node by node (Sheets → Drive → AI → Supabase → Email), then switch the workflow to **Active**.
 
 ---
 
 ## 🧰 Tech Stack
 
-| Component            | Tool / Service               |
-| -------------------- | ---------------------------- |
-| Automation Engine    | n8n                          |
-| Forms & Responses    | Google Forms + Google Sheets |
-| Resume Storage       | Google Drive                 |
-| AI Screening         | Google Gemini                |
-| AI Fallback          | Groq (Qwen)                  |
-| Database             | Supabase PostgreSQL          |
-| Interview Scheduling | Google Calendar              |
-| Emails               | Gmail API                    |
-
----
-
-## 🗂 Folder Structure
-
-```bash
-HireFlowAI/
-├── images/
-│   ├── workflow1.png
-│   └── workflow2.png
-│
-├── workflow/
-│   └── Hiring Automation.json
-│
-├── database_setup/
-│   └── db_query.sql
-│
-└── README.md
-```
-
----
-
-# 🔄 How the Workflow Works
-
-The automation is divided into **two independent workflows**.
-
-This separation improves:
-
-* Reliability
-* Fault isolation
-* Easier debugging
-* Better scalability
-* Human review flexibility
-
----
-
-## 🚀 Workflow 1 — Candidate Ingestion & AI Screening
-
-**Runs Every:** 2 Hours
-
-### Flow
+| Component | Tool |
+|---|---|
+| Automation Engine | n8n |
+| Forms and Responses | Google Forms + Google Sheets |
+| Resume Storage | Google Drive |
+| AI Screening | Google Gemini |
+| AI Fallback | Groq (Qwen) |
+| Database | Supabase PostgreSQL |
+| Scheduling | Google Calendar |
+| Email | Gmail API |
 
 ```text
-Google Forms / Sheets
-        ↓
-Data Cleaning & Mapping
-        ↓
-Duplicate Check (Supabase)
-        ↓
-Resume Download (Drive)
-        ↓
-PDF Text Extraction
-        ↓
-AI Screening (Gemini → Groq)
-        ↓
-Store Candidate Record
-        ↓
-Confirmation Email
-```
-
-### What Happens?
-
-1. Reads new applications from SWE and BDM forms
-2. Cleans and maps form fields
-3. Checks Supabase for duplicates
-4. Downloads resumes
-5. Extracts PDF content
-6. Builds role-specific AI prompts
-7. Evaluates candidate using AI
-8. Stores AI assessment
-9. Sends confirmation email
-
----
-
-## 📧 Workflow 2 — Communication & Scheduling
-
-**Runs Every:** 12 Hours
-
-### Flow
-
-```text
-Pending Candidates
-        ↓
-AI Classification Check
-        ↓
-Strong / Average / Weak
-        ↓
-Interview / Review / Reject
-        ↓
-Status Update
-```
-
-### Decision Logic
-
-### 🟢 Strong Candidates
-
-```text
-Available Slot Check
-        ↓
-Create Calendar Event
-        ↓
-Book Slot
-        ↓
-Interview Email
-```
-
-### 🟡 Average Candidates
-
-```text
-Manual Review Email
-        ↓
-Hiring Team Decision
-```
-
-### 🔴 Weak Candidates
-
-```text
-Rejection Email
+Hiring-Automation/
+├── images/              # Workflow screenshots
+├── workflow/            # n8n workflow export (JSON)
+├── database_setup/      # Supabase SQL
+└── readme.md
 ```
 
 ---
 
-## 🗄 Database Setup
-
-The workflow uses **Supabase PostgreSQL** for persistent hiring data.
-
-### Main Tables
-
-### `candidates`
-
-Stores:
-
-* Candidate information
-* Resume links
-* AI score
-* Classification
-* Strengths & concerns
-* Hiring status
-
-### `available_slots`
-
-Stores:
-
-* Interview timings
-* Booking status
-* Assigned candidate
-
-SQL setup file is included inside:
-
-```bash
-database_setup/
-```
-
----
-
-## ✅ Prerequisites
-
-Before running locally, make sure you have:
-
-* Running **n8n** instance
-* Google account
-* Google Forms + Sheets + Drive + Gmail + Calendar access
-* Supabase project
-* Gemini API key
-* Groq API key
-
----
-
-## 🔐 Credentials Setup
-
-Configure these credentials inside n8n:
-
-### 1. Google Sheets OAuth2
-
-Used for:
-
-* Reading application forms
-
----
-
-### 2. Google Drive OAuth2
-
-Used for:
-
-* Downloading resumes
-
----
-
-### 3. Google Calendar OAuth2
-
-Used for:
-
-* Creating interview events
-
----
-
-### 4. Gmail OAuth2
-
-Used for:
-
-* Sending candidate emails
-
----
-
-### 5. Supabase
-
-Add:
-
-* Project URL
-* Service Role Key
-
-Used for:
-
-* Candidate database
-* Interview slots
-
----
-
-### 6. Gemini API
-
-Used for:
-
-* Primary AI screening
-
----
-
-### 7. Groq API
-
-Used for:
-
-* AI fallback handling
-
----
-
-# ⚙️ Run Locally
-
-## Step 1 — Clone Repository
-
-```bash
-git clone https://github.com/fewgets/HireFlowAI.git
-cd HireFlowAI
-```
-
----
-
-## Step 2 — Setup Database
-
-Open **Supabase SQL Editor** and run:
-
-```bash
-database_setup/db_query.sql
-```
-
-This creates:
-
-* candidates table
-* available_slots table
-
----
-
-## Step 3 — Import Workflow
-
-Inside n8n:
-
-```text
-Workflows
-    ↓
-Import
-    ↓
-workflow/Hiring Automation.json
-```
-
----
-
-## Step 4 — Configure Credentials
-
-Update:
-
-* Google OAuth credentials
-* Supabase keys
-* Gemini API
-* Groq API
-
-Inside relevant nodes.
-
----
-
-## Step 5 — Update Google Assets
-
-Replace:
-
-* Google Sheet IDs
-* Calendar ID
-* Manager Email
-* Form-linked resources
-
-Inside workflow nodes.
-
----
-
-## Step 6 — Test Workflow
-
-Run node-by-node:
-
-```text
-Sheets
-↓
-Drive
-↓
-AI
-↓
-Supabase
-↓
-Email
-```
-
-Verify successful execution.
-
----
-
-## Step 7 — Activate
-
-Once everything works:
-
-```text
-Save Workflow
-        ↓
-Enable Active Toggle
-```
-
-The automation now runs automatically.
-
----
-
-## 📷 Workflow Screenshots
-
-| Workflow 1                | Workflow 2                |
-| ------------------------- | ------------------------- |
-| ![](images/workflow1.png) | ![](images/workflow2.png) |
-
----
-
-## 🤝 Contact & Support
-
-For collaborations, freelance work, or questions:
-
-### 👤 Usama Shahid
-
-📧 **Email**
-[dev.usamashahid@gmail.com](mailto:dev.usamashahid@gmail.com)
-
-🔗 **LinkedIn**
-https://linkedin.com/in/usamashahid2366009
-
-🐙 **GitHub**
-https://github.com/fewgets
-
----
-
-## 📜 License
-
-This project is built for **learning, automation research, and portfolio demonstration**.
-
-Feel free to fork, improve, and adapt.
-
----
+## 🤝 Let's Work Together
 
 <div align="center">
 
-### Built with ❤️ using n8n • Supabase • Gemini • Groq
+**Have an idea, a freelance project, or want to collaborate on something in AI?**
+I'm always open to collaborations, freelance work and full-time opportunities.
 
-*"Automating hiring so humans can focus on humans."*
+<a href="mailto:shaikhusama541@gmail.com?subject=Collaboration%20-%20HireFlow%20AI">
+  <img src="https://img.shields.io/badge/Email-shaikhusama541%40gmail.com-36FFC7?style=for-the-badge&logo=gmail&logoColor=white&labelColor=0D1117" alt="Email"/>
+</a>
+<a href="https://www.linkedin.com/in/-usamashahid/">
+  <img src="https://img.shields.io/badge/LinkedIn-Usama%20Shahid-36FFC7?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=0D1117" alt="LinkedIn"/>
+</a>
+<a href="https://github.com/fewgets">
+  <img src="https://img.shields.io/badge/GitHub-fewgets-36FFC7?style=for-the-badge&logo=github&logoColor=white&labelColor=0D1117" alt="GitHub"/>
+</a>
+
+<br/><br/>
+
+⭐ **If you like this project, please give it a star. It really helps!** ⭐
+
+<br/>
+
+<h3>"Automating hiring so humans can focus on humans."</h3>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:36FFC7,55:0F3D3E,100:0D1117&height=150&section=footer&animation=twinkling" width="100%" alt="footer"/>
 
 </div>
